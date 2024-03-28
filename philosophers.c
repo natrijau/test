@@ -6,7 +6,7 @@
 /*   By: natrijau <natrijau@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/19 14:05:09 by natrijau          #+#    #+#             */
-/*   Updated: 2024/03/28 13:47:18 by natrijau         ###   ########.fr       */
+/*   Updated: 2024/03/28 15:33:47 by natrijau         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,73 +39,78 @@ bool	check_arg(int ac, char **av)
 	return(true);
 }	
 
-struct {
-	bool is_taken;
-	pthread_mutex_t lock;
-} t_protected_fork;
-
-
-void	ft_eating(t_philosophers *philo, t_data *data)
+void	check_dead(long int current_time, t_philosophers *philo)
 {
 	struct timeval my_time;
-  	long int current_time;
-	// // usleep(3000000);
-	// // printf("start = %ld\n", end.tv_sec - start.tv_sec);
-	gettimeofday(&my_time, NULL);
-	// printf("Le philosophe %d pense !\n", philo->id_philosphers);
-	pthread_mutex_lock(&philo->my_fork);
-	pthread_mutex_lock(philo->next_fork);
-	usleep(philo->time_to_eat * 1000);
-	current_time = (my_time.tv_sec * 1000) + (my_time.tv_usec / 1000);	
-	printf("%ld\tLe philosophe %d prend la 1ere fourchette ! \n",current_time - data->start_time,  philo->id_philosphers);
-	printf("%ld\tLe philosophe %d prend la deuxieme fourchettes ! \n",current_time - data->start_time,  philo->id_philosphers);
-	printf("%ld\tLe philosophe %d mange \n",current_time - data->start_time,  philo->id_philosphers);
-	philo->number_of_times_each_philosopher_must_eat--;
-	pthread_mutex_unlock(&philo->my_fork);
-	pthread_mutex_unlock(philo->next_fork);
-	// printf("Le philosophe %d dort !\n", philo->id_philosphers);
-	// usleep(philo->time_to_sleep * 1000);
-	// printf("Le philosophe %d pense !\n", philo->id_philosphers);
-	// usleep(100);
+  	long int check_time;
+		printf("current_time vaut %ld\n", current_time - philo->start_time);
+		printf("philo->start_time vaut %ld\n", philo->start_time);
+	while (current_time > philo->time_to_die)
+	{
+		usleep(1);
+		gettimeofday(&my_time, NULL);
+		check_time = ((my_time.tv_sec * 1000) + (my_time.tv_usec / 1000)) - current_time;
+		printf("check time vaut %ld\n", check_time);
+	}
 }
 
-void	sleeping(t_philosophers *philo, t_data *data)
+void	ft_eating(t_philosophers *philo)
 {
 	struct timeval my_time;
   	long int current_time;
+	pthread_mutex_lock(&philo->my_fork);
+	pthread_mutex_lock(philo->next_fork);
+	pthread_mutex_lock(&philo->print);
+	gettimeofday(&my_time, NULL);
+	current_time = (my_time.tv_sec * 1000) + (my_time.tv_usec / 1000);	
+	printf("%ld\tLe philosophe %d take fork ! \n",current_time - philo->start_time,  philo->id_philosphers);
+	printf("%ld\tLe philosophe %d take second fork ! \n",current_time - philo->start_time,  philo->id_philosphers);
+	printf("%ld\tLe philosophe %d start eat \n",current_time - philo->start_time,  philo->id_philosphers);
+	philo->number_of_times_each_philosopher_must_eat--;
+	pthread_mutex_unlock(&philo->print);
+	check_dead(current_time - philo->start_time, philo);
+	usleep(philo->time_to_eat);
+	pthread_mutex_unlock(&philo->my_fork);
+	pthread_mutex_unlock(philo->next_fork);
+}
+
+void	sleeping(t_philosophers *philo)
+{
+	struct timeval my_time;
+  	long int current_time;
+	
+	pthread_mutex_lock(&philo->print);
 	gettimeofday(&my_time, NULL);
     usleep(philo->time_to_sleep);
 	current_time = (my_time.tv_sec * 1000) + (my_time.tv_usec / 1000);
-	printf("%ld\tLe philosophe %d dort !\n",current_time - data->start_time, philo->id_philosphers);
+	printf("%ld\tLe philosophe %d sleep !\n",current_time - philo->start_time, philo->id_philosphers);
+	pthread_mutex_unlock(&philo->print);
 }
 
-void	thinking(t_philosophers *philo, t_data *data)
+void	thinking(t_philosophers *philo)
 {	struct timeval my_time;
   	long int current_time;
+	pthread_mutex_lock(&philo->print);
 	gettimeofday(&my_time, NULL);
-	usleep(100);
+	usleep(1);
 	current_time = (my_time.tv_sec * 1000) + (my_time.tv_usec / 1000);
-	printf("%ld\tLe philosophe %d pense !\n",(current_time - data->start_time),  philo->id_philosphers);
-}
-
-float time_diff(struct timeval *start, struct timeval *end) {
-  return ((end->tv_sec - start->tv_sec) + 1e-6 * (end->tv_usec - start->tv_usec));
+	printf("%ld\tLe philosophe %d think !\n",(current_time - philo->start_time),  philo->id_philosphers);
+	pthread_mutex_unlock(&philo->print);
 }
 
 void	*round_table(void *arg)
 {
-	t_data	*data = (t_data *) arg;
+	t_philosophers	*philo = (t_philosophers *) arg;
 	struct timeval start;
 	gettimeofday(&start, NULL);
-	data->start_time = (start.tv_sec * 1000) + (start.tv_usec / 1000);
-	printf("depart timer %ld\n", data->start_time);
+	philo->start_time = (start.tv_sec * 1000) + (start.tv_usec / 1000);
 	while (1)
 	{
-		ft_eating(data->data_philo, data);
-		if(data->data_philo->number_of_times_each_philosopher_must_eat == 0)
+		ft_eating(philo);
+		if(philo->number_of_times_each_philosopher_must_eat == 0)
 			break;
-		sleeping(data->data_philo, data);
-		thinking(data->data_philo, data);
+		sleeping(philo);
+		thinking(philo);
 	}
 	pthread_exit(EXIT_SUCCESS);	
 }
@@ -118,7 +123,7 @@ void	get_thread(t_data *data)
 	data->id_fork = malloc(sizeof(int) * num_fork);
 	while (num_fork > 0)
 	{
-		pthread_create(&data->data_philo[num_fork -1].thread_philo, NULL, round_table, data);
+		pthread_create(&data->data_philo[num_fork -1].thread_philo, NULL, round_table, &data->data_philo[num_fork - 1]);
 		num_fork--;
 	}
 	while (num_fork < data->data_philo->number_of_philosophers)

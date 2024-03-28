@@ -6,7 +6,7 @@
 /*   By: natrijau <natrijau@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/27 12:05:00 by natrijau          #+#    #+#             */
-/*   Updated: 2024/03/28 10:37:10 by natrijau         ###   ########.fr       */
+/*   Updated: 2024/03/28 15:10:21 by natrijau         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,14 +24,15 @@ void	init_philo(t_data *data, char **av)
 	while (i < number_philo)
 	{
 		data->data_philo[i].number_of_philosophers = ft_atoi(av[1]);
-		data->data_philo[i].time_to_die = ft_atoi(av[2]);	
-		data->data_philo[i].time_to_eat = ft_atoi(av[3]);	
-		data->data_philo[i].time_to_sleep = ft_atoi(av[4]);
+		data->data_philo[i].time_to_die = ft_atoi(av[2]) * 1000;	
+		data->data_philo[i].time_to_eat = ft_atoi(av[3]) * 1000;	
+		data->data_philo[i].time_to_sleep = ft_atoi(av[4]) * 1000;
 		if (av[5])
 			data->data_philo[i].number_of_times_each_philosopher_must_eat = ft_atoi(av[5]);
-		data->data_philo[i].id_philosphers = i;
+		data->data_philo[i].id_philosphers = i + 1;
 		data->data_philo[i].my_fork = mutex[i];
 		data->data_philo[i].next_fork = &data->data_philo[i + 1].my_fork;
+		// data->data_philo[i].print = mutex[i];
 		i++;
 	}
 	data->data_philo[i - 1].next_fork = &data->data_philo[0].my_fork;
@@ -52,7 +53,7 @@ void	init_mutex(t_data *data)
 		// pthread_mutex_init(data->data_philo->thinking, NULL);
 		pthread_mutex_init(&data->data_philo->my_fork, NULL);
 		pthread_mutex_init(data->data_philo->next_fork, NULL);
-		pthread_mutex_init(data->data_philo->print, NULL);
+		pthread_mutex_init(&data->data_philo->print, NULL);
 		i++;
 	}
 }

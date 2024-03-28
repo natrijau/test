@@ -28,11 +28,12 @@ typedef struct s_philosophers
 	unsigned int	number_of_times_each_philosopher_must_eat;
 	unsigned int	id_philosphers;
 	bool			die;
+	long int		start_time;
+	long int		end_time;	
 	pthread_t		thread_philo;
 	pthread_mutex_t	my_fork;
 	pthread_mutex_t	*next_fork;
-	//pthread_mutex_t	*dead;
-	pthread_mutex_t	*print;
+	pthread_mutex_t	print;
 } t_philosophers;
 
 typedef struct s_data
@@ -41,8 +42,6 @@ typedef struct s_data
 	int				*id_fork;
 
 	// pthread_t		thread;
-	long int		start_time;
-	long int		end_time;	
 	pthread_mutex_t	mutex;
 	pthread_mutex_t	*eat;
 	pthread_mutex_t	*dead;
