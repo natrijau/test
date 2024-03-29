@@ -27,9 +27,10 @@ typedef struct s_philosophers
 	unsigned int	time_to_sleep;
 	unsigned int	number_of_times_each_philosopher_must_eat;
 	unsigned int	id_philosphers;
-	bool			die;
 	long int		start_time;
-	long int		end_time;	
+	long int		end_time;
+	long int		start_dead;
+	bool			alive;
 	pthread_t		thread_philo;
 	pthread_mutex_t	my_fork;
 	pthread_mutex_t	*next_fork;
@@ -40,8 +41,8 @@ typedef struct s_data
 {
 	int				dead_id;
 	int				*id_fork;
-
 	// pthread_t		thread;
+	bool 			**lifeOfPhilo;
 	pthread_mutex_t	mutex;
 	pthread_mutex_t	*eat;
 	pthread_mutex_t	*dead;

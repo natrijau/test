@@ -18,6 +18,7 @@ void	init_philo(t_data *data, char **av)
 	int	number_philo;
 	pthread_mutex_t	*mutex;
 	number_philo = ft_atoi(av[1]);
+	data->lifeOfPhilo = malloc(sizeof(bool) * number_philo);
 	mutex = malloc(sizeof(pthread_mutex_t) * number_philo);
 	data->data_philo = malloc(sizeof(t_philosophers) * number_philo);
 	i = 0;
@@ -30,14 +31,14 @@ void	init_philo(t_data *data, char **av)
 		if (av[5])
 			data->data_philo[i].number_of_times_each_philosopher_must_eat = ft_atoi(av[5]);
 		data->data_philo[i].id_philosphers = i + 1;
+		data->lifeOfPhilo[i] = &data->data_philo[i].alive;
 		data->data_philo[i].my_fork = mutex[i];
+		data->data_philo[i].alive = true;
 		data->data_philo[i].next_fork = &data->data_philo[i + 1].my_fork;
-		// data->data_philo[i].print = mutex[i];
 		i++;
 	}
 	data->data_philo[i - 1].next_fork = &data->data_philo[0].my_fork;
 	free(mutex);
-	// init_mutex(data);
 }
 
 void	init_mutex(t_data *data)

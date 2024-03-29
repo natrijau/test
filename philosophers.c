@@ -39,19 +39,35 @@ bool	check_arg(int ac, char **av)
 	return(true);
 }	
 
-void	check_dead(long int current_time, t_philosophers *philo)
+void	check_dead(long int current_time, t_philosophers *philo, int flag)
 {
 	struct timeval my_time;
   	long int check_time;
-		printf("current_time vaut %ld\n", current_time - philo->start_time);
-		printf("philo->start_time vaut %ld\n", philo->start_time);
-	while (current_time > philo->time_to_die)
+	gettimeofday(&my_time, NULL);
+	check_time = ((my_time.tv_sec * 1000) + (my_time.tv_usec / 1000)) - current_time;
+	if (flag == 0)
+		philo->start_dead = 0;
+	if (flag == 1)
 	{
-		usleep(1);
-		gettimeofday(&my_time, NULL);
-		check_time = ((my_time.tv_sec * 1000) + (my_time.tv_usec / 1000)) - current_time;
-		printf("check time vaut %ld\n", check_time);
-	}
+		while (check_time - philo->start_dead > philo->time_to_sleep)
+		{
+			usleep(100);
+			if (philo->start_dead >= philo->end_time)
+			{
+			printf("caca!\n");
+				philo->alive = false;
+				break;
+			}
+		}
+		
+	}	
+		// printf("current_time vaut %ld\n", current_time);
+		// printf("philo->start_time vaut %ld\n", philo->start_time);
+	// while (current_time > philo->time_to_die)
+	// {
+		// usleep(1);
+		// printf("check time vaut %ld\n", check_time);
+	//}
 }
 
 void	ft_eating(t_philosophers *philo)
@@ -67,8 +83,8 @@ void	ft_eating(t_philosophers *philo)
 	printf("%ld\tLe philosophe %d take second fork ! \n",current_time - philo->start_time,  philo->id_philosphers);
 	printf("%ld\tLe philosophe %d start eat \n",current_time - philo->start_time,  philo->id_philosphers);
 	philo->number_of_times_each_philosopher_must_eat--;
+	check_dead(current_time - philo->start_time, philo, 0);
 	pthread_mutex_unlock(&philo->print);
-	check_dead(current_time - philo->start_time, philo);
 	usleep(philo->time_to_eat);
 	pthread_mutex_unlock(&philo->my_fork);
 	pthread_mutex_unlock(philo->next_fork);
@@ -81,9 +97,10 @@ void	sleeping(t_philosophers *philo)
 	
 	pthread_mutex_lock(&philo->print);
 	gettimeofday(&my_time, NULL);
-    usleep(philo->time_to_sleep);
 	current_time = (my_time.tv_sec * 1000) + (my_time.tv_usec / 1000);
 	printf("%ld\tLe philosophe %d sleep !\n",current_time - philo->start_time, philo->id_philosphers);
+	check_dead(current_time - philo->start_time, philo, 1);
+    usleep(philo->time_to_sleep);
 	pthread_mutex_unlock(&philo->print);
 }
 
@@ -121,6 +138,12 @@ void	get_thread(t_data *data)
 
 	num_fork = data->data_philo->number_of_philosophers;
 	data->id_fork = malloc(sizeof(int) * num_fork);
+// kc	if (data->data_philo->time_to_die < data->data_philo->time_to_eat
+// kc		|| data->data_philo->time_to_die < data->data_philo->time_to_eat + data->data_philo->time_to_sleep)
+// kc	{
+// kc		printf("0\t On of the philo are dead !\n");
+// kc		exit(0);
+// kc	}
 	while (num_fork > 0)
 	{
 		pthread_create(&data->data_philo[num_fork -1].thread_philo, NULL, round_table, &data->data_philo[num_fork - 1]);
