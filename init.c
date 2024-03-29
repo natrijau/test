@@ -6,7 +6,7 @@
 /*   By: natrijau <natrijau@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/27 12:05:00 by natrijau          #+#    #+#             */
-/*   Updated: 2024/03/28 15:10:21 by natrijau         ###   ########.fr       */
+/*   Updated: 2024/03/29 17:52:17 by natrijau         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@ void	init_philo(t_data *data, char **av)
 	int	number_philo;
 	pthread_mutex_t	*mutex;
 	number_philo = ft_atoi(av[1]);
-	data->lifeOfPhilo = malloc(sizeof(bool) * number_philo);
 	mutex = malloc(sizeof(pthread_mutex_t) * number_philo);
 	data->data_philo = malloc(sizeof(t_philosophers) * number_philo);
 	i = 0;
@@ -31,9 +30,10 @@ void	init_philo(t_data *data, char **av)
 		if (av[5])
 			data->data_philo[i].number_of_times_each_philosopher_must_eat = ft_atoi(av[5]);
 		data->data_philo[i].id_philosphers = i + 1;
-		data->lifeOfPhilo[i] = &data->data_philo[i].alive;
 		data->data_philo[i].my_fork = mutex[i];
 		data->data_philo[i].alive = true;
+		data->data_philo[i].start_dead = 0;
+		data->data_philo[i].end_time = 0;
 		data->data_philo[i].next_fork = &data->data_philo[i + 1].my_fork;
 		i++;
 	}

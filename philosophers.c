@@ -6,7 +6,7 @@
 /*   By: natrijau <natrijau@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/19 14:05:09 by natrijau          #+#    #+#             */
-/*   Updated: 2024/03/28 15:33:47 by natrijau         ###   ########.fr       */
+/*   Updated: 2024/03/29 17:50:10 by natrijau         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,33 +41,32 @@ bool	check_arg(int ac, char **av)
 
 void	check_dead(long int current_time, t_philosophers *philo, int flag)
 {
-	struct timeval my_time;
-  	long int check_time;
-	gettimeofday(&my_time, NULL);
-	check_time = ((my_time.tv_sec * 1000) + (my_time.tv_usec / 1000)) - current_time;
+	(void)current_time;
+	// struct timeval my_time;
+  	// long int check_time;
+	// gettimeofday(&my_time, NULL);
+	// check_time = ((my_time.tv_sec * 1000) + (my_time.tv_usec / 1000)) - current_time;
 	if (flag == 0)
-		philo->start_dead = 0;
+	{
+		if (philo->start_dead >= philo->time_to_die
+			|| philo->time_to_eat >= philo->time_to_die)
+		{
+			philo->alive = false;
+			philo->end_time = philo->time_to_die / 1000;
+		}
+		else
+			philo->start_dead = 0;
+	}
 	if (flag == 1)
 	{
-		while (check_time - philo->start_dead > philo->time_to_sleep)
+		philo->start_dead += philo->time_to_sleep + philo->time_to_eat;
+		if (philo->start_dead >= philo->time_to_die
+			|| philo->time_to_sleep >= philo->time_to_die)
 		{
-			usleep(100);
-			if (philo->start_dead >= philo->end_time)
-			{
-			printf("caca!\n");
-				philo->alive = false;
-				break;
-			}
+			philo->alive = false;
+			philo->end_time = philo->time_to_die / 1000;
 		}
-		
 	}	
-		// printf("current_time vaut %ld\n", current_time);
-		// printf("philo->start_time vaut %ld\n", philo->start_time);
-	// while (current_time > philo->time_to_die)
-	// {
-		// usleep(1);
-		// printf("check time vaut %ld\n", check_time);
-	//}
 }
 
 void	ft_eating(t_philosophers *philo)
@@ -109,7 +108,6 @@ void	thinking(t_philosophers *philo)
   	long int current_time;
 	pthread_mutex_lock(&philo->print);
 	gettimeofday(&my_time, NULL);
-	usleep(1);
 	current_time = (my_time.tv_sec * 1000) + (my_time.tv_usec / 1000);
 	printf("%ld\tLe philosophe %d think !\n",(current_time - philo->start_time),  philo->id_philosphers);
 	pthread_mutex_unlock(&philo->print);
@@ -132,18 +130,11 @@ void	*round_table(void *arg)
 	pthread_exit(EXIT_SUCCESS);	
 }
 
-void	get_thread(t_data *data)
+int	get_thread(t_data *data)
 {
 	unsigned int	num_fork;
 
 	num_fork = data->data_philo->number_of_philosophers;
-	data->id_fork = malloc(sizeof(int) * num_fork);
-// kc	if (data->data_philo->time_to_die < data->data_philo->time_to_eat
-// kc		|| data->data_philo->time_to_die < data->data_philo->time_to_eat + data->data_philo->time_to_sleep)
-// kc	{
-// kc		printf("0\t On of the philo are dead !\n");
-// kc		exit(0);
-// kc	}
 	while (num_fork > 0)
 	{
 		pthread_create(&data->data_philo[num_fork -1].thread_philo, NULL, round_table, &data->data_philo[num_fork - 1]);
@@ -151,9 +142,23 @@ void	get_thread(t_data *data)
 	}
 	while (num_fork < data->data_philo->number_of_philosophers)
 	{
-		pthread_join(data->data_philo[num_fork].thread_philo, NULL);
+		if (data->data_philo[num_fork].alive == false)
+		{
+			pthread_mutex_lock(&data->data_philo[num_fork].print);
+			printf("%ld\tLe philosophe %d est mort !\n", data->data_philo[num_fork].end_time, data->data_philo[num_fork].id_philosphers);
+			pthread_mutex_unlock(&data->data_philo[num_fork].print);
+			return(0);
+		}
 		num_fork++;
+		if(num_fork == data->data_philo->number_of_philosophers && data->data_philo->number_of_times_each_philosopher_must_eat > 0)
+			num_fork = 0;
+	}	
+	while (num_fork > 0)
+	{
+		pthread_join(data->data_philo[num_fork - 1].thread_philo, NULL);
+		num_fork--;
 	}
+	return (0);
 }
 
 int	main(int ac, char **av)
@@ -164,6 +169,6 @@ int	main(int ac, char **av)
 	init_philo(&data, av);
 	// print_test_init(&data);
 	get_thread(&data);
-	free_all(&data);
+	// free_all(&data);
 	return (0);
 }

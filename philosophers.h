@@ -40,9 +40,7 @@ typedef struct s_philosophers
 typedef struct s_data
 {
 	int				dead_id;
-	int				*id_fork;
 	// pthread_t		thread;
-	bool 			**lifeOfPhilo;
 	pthread_mutex_t	mutex;
 	pthread_mutex_t	*eat;
 	pthread_mutex_t	*dead;
